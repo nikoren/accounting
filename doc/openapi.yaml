@@ -1,0 +1,380 @@
+openapi: 3.0.0
+info:
+  title: Accounting API
+  version: 1.0.0
+  description: API for managing document splits and authentication.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
+    Split:
+      type: object
+      properties:
+        split_id:
+          type: string
+        client_id:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        classification:
+          type: string
+        file_name:
+          type: string
+        name:
+          type: string
+        start_page:
+          type: integer
+        end_page:
+          type: integer
+        short_description:
+          type: string
+        page_urls:
+          type: array
+          items:
+            type: string
+
+    UpdateDocumentMetadataRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        classification:
+          type: string
+        filename:
+          type: string
+
+    MovePagesRequest:
+      type: object
+      properties:
+        pageIDs:
+          type: array
+          items:
+            type: string
+        fromDocumentID:
+          type: string
+        toDocumentID:
+          type: string
+      required:
+        - pageIDs
+        - fromDocumentID
+        - toDocumentID
+
+    CreateDocumentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        pageIDs:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - pageIDs
+
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    MovePagesResponse:
+      type: object
+      properties:
+        fromDocument:
+          $ref: '#/components/schemas/DocumentResponse'
+        toDocument:
+          $ref: '#/components/schemas/DocumentResponse'
+
+    DownloadDocumentResponse:
+      type: object
+      properties:
+        data:
+          type: string
+          format: binary
+
+    MetricsResponse:
+      type: object
+      properties:
+        uptime_seconds:
+          type: number
+          format: float
+          description: Server uptime in seconds
+        requests_total:
+          type: integer
+          description: Total number of requests processed
+        errors_total:
+          type: integer
+          description: Total number of errors encountered
+        last_error:
+          type: string
+          description: Last error that occurred
+        avg_duration_ms:
+          type: number
+          format: float
+          description: Average request duration in milliseconds
+        total_response_mb:
+          type: number
+          format: float
+          description: Total response size in megabytes
+        active_connections:
+          type: integer
+          description: Current number of active connections
+        rate_limit_hits:
+          type: integer
+          description: Number of requests that hit rate limits
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request body
+        '401':
+          description: Invalid credentials
+        '405':
+          description: Method not allowed
+
+  /splits/{id}:
+    get:
+      summary: Load a split
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Split'
+        '400':
+          description: Split ID is required
+        '401':
+          description: Unauthorized
+        '404':
+          description: Split not found
+        '405':
+          description: Method not allowed
+
+  /documents/{id}:
+    patch:
+      summary: Update document metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDocumentMetadataRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Document ID is required or invalid request body
+        '401':
+          description: Unauthorized
+        '404':
+          description: Document not found
+        '405':
+          description: Method not allowed
+    delete:
+      summary: Delete a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Document deleted
+        '400':
+          description: Document ID is required
+        '401':
+          description: Unauthorized
+        '404':
+          description: Document not found
+        '405':
+          description: Method not allowed
+
+  /pages/move:
+    post:
+      summary: Move pages between documents
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovePagesRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovePagesResponse'
+        '400':
+          description: Page IDs are required or invalid request body
+        '401':
+          description: Unauthorized
+        '404':
+          description: Document not found
+        '405':
+          description: Method not allowed
+
+  /documents:
+    post:
+      summary: Create a new document
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Page IDs are required or invalid request body
+        '401':
+          description: Unauthorized
+        '405':
+          description: Method not allowed
+
+  /splits/{id}/finalize:
+    post:
+      summary: Finalize a split
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Split finalized
+        '400':
+          description: Split ID is required
+        '401':
+          description: Unauthorized
+        '404':
+          description: Split not found
+        '405':
+          description: Method not allowed
+
+  /documents/{id}/download:
+    get:
+      summary: Download a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/pdf:
+              schema:
+                $ref: '#/components/schemas/DownloadDocumentResponse'
+        '400':
+          description: Document ID is required
+        '401':
+          description: Unauthorized
+        '404':
+          description: Document not found
+        '405':
+          description: Method not allowed
+
+  /metrics:
+    get:
+      summary: Get server metrics
+      description: Returns current server statistics and performance metrics
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse' 

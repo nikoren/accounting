@@ -1,0 +1,81 @@
+---
+description: Requirements of the entire project
+globs: 
+alwaysApply: false
+---
+# Document Split + Review Backend Requirements
+
+## Overview
+Ascend helps accountants prepare taxes efficiently. To start prep, accountants upload bundled PDF documents from clients, which are automatically split into multiple document chunks by an internal AI model.
+
+## API Endpoints
+
+### 1. Load Document Split
+- **Endpoint**: `GET /api/splits/:split_id`
+- **Description**: Returns JSON data describing the split and its documents
+
+### 2. Update Document Metadata
+- **Endpoint**: `PATCH /api/documents/:id`
+- **Fields**: name, classification, filename
+
+### 3. Reassign Pages
+- **Endpoint**: `POST /api/pages/move`
+- **Description**: Move page(s) from one document to another
+
+### 4. Create New Document
+- **Endpoint**: `POST /api/documents`
+- **Description**: Accepts a list of page IDs and metadata to create a new document
+
+### 5. Delete Document
+- **Endpoint**: `DELETE /api/documents/:id`
+- **Description**: Reassign pages to another document, or mark as "unassigned"
+
+### 6. Save Final Split
+- **Endpoint**: `POST /api/splits/:split_id/finalize`
+- **Description**: Save the finalized version of the split
+
+### 7. Download Document
+- **Endpoint**: `GET /api/documents/:id/download`
+- **Description**: Returns a downloadable PDF blob for the document (can be mocked)
+
+## Data Model
+
+### Example Split JSON
+```json
+{
+  "split_id": "abc123",
+  "client_id": "client456",
+  "documents": [
+    {
+      "id": "doc1",
+      "classification": "W-2",
+      "file_name": "w2_2023.pdf",
+      "name": "John W2 Form",
+      "start_page": 1,
+      "end_page": 3,
+      "short_description": "W2 from employer",
+      "page_urls": ["page_1.png", "page_2.png", "page_3.png"]
+    }
+  ]
+}
+```
+
+## Technical Requirements
+
+### Stack
+- Language: Go
+- Database: In-memory or SQLite
+- API Style: REST
+
+### Deliverables
+- Working API server
+- Sample JSON data as input/output
+- Instructions to run the server locally
+- Postman collection or equivalent for API testing
+- Automated tests for core API functions
+
+### Implementation Guidelines
+- Prioritize clarity and simplicity in API design
+- Include observability for tracking misclassifications and page reassignments
+- Consider scalability for 10x client load
+- Implement basic authorization and input validation
