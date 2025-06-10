@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package integration
 
 import (
@@ -139,7 +142,12 @@ func TestSplitOperations(t *testing.T) {
 
 	// Delete the initial document first to free up the pages
 	err = apiClient.DeleteDocument(ctx, "initial-doc")
-	require.NoError(t, err)
+	if err != nil {
+		// Ignore error if document doesn't exist
+		if err.Error() != "failed to delete document: request failed: document initial-doc not found" {
+			require.NoError(t, err)
+		}
+	}
 
 	t.Run("create and delete document", func(t *testing.T) {
 		// Create document

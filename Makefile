@@ -19,3 +19,6 @@ docker:
 # Deploy the application using Helm
 deploy:
 	helm install accounting ./deploy/helm/accounting 
+
+test-integration:
+	./test/integration/run_tests.sh

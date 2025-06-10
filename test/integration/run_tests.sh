@@ -26,7 +26,7 @@ go run test/scripts/setup_db.go
 
 sleep 2
 # Run integration tests
-go test -v ./test/integration
+go test -tags=integration ./test/integration/...
 
 # Clean up
 kill $SERVER_PID

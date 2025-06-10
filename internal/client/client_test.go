@@ -48,9 +48,15 @@ func TestClient(t *testing.T) {
 				ClientID: "client1",
 				Documents: []Document{
 					{
-						ID:       "doc1",
-						Name:     "Test Document",
-						PageURLs: []string{"page1.png"},
+						ID:   "doc1",
+						Name: "Test Document",
+						Pages: []PageResponse{
+							{
+								ID:         "page1",
+								PageNumber: "1",
+								URL:        "page1.png",
+							},
+						},
 					},
 				},
 			})
