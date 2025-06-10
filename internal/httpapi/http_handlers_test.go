@@ -653,7 +653,3 @@ func compareSlices(a, b []interface{}) bool {
 	return true
 }
 
-// Helper function to create string pointer
-func stringPtr(s string) *string {
-	return &s
-}
