@@ -41,7 +41,7 @@ jobs:
       # Step 5: Set up SonarCloud
       # This step prepares the SonarCloud scanner
       - name: Set up SonarCloud
-        uses: SonarSource/sonarcloud-github-action@v1.10
+        uses: SonarSource/sonarcloud-github-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # SonarCloud token (you'll need to add this)
@@ -60,3 +60,12 @@ jobs:
             -Dsonar.go.coverage.reportPaths=coverage.out \
             -Dsonar.test.inclusions=**/*_test.go \
             -Dsonar.exclusions=**/vendor/**,**/test/**
+
+      # Step 7: Upload coverage report as artifact
+      # This step saves the coverage report as a workflow artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 7
