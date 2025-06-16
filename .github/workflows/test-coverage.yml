@@ -1,0 +1,62 @@
+name: Test Coverage and SonarCloud Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-coverage:
+    name: Test Coverage and SonarCloud Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the code
+      # This step clones your repository so the workflow can access it
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for SonarCloud to analyze git history
+
+      # Step 2: Set up Go
+      # This step sets up the Go environment with the specified version
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'  # Using the latest stable version
+
+      # Step 3: Install dependencies
+      # This step ensures all Go dependencies are downloaded
+      - name: Install dependencies
+        run: go mod download
+
+      # Step 4: Run tests with coverage
+      # This step runs all tests and generates a coverage profile
+      - name: Run tests with coverage
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out
+
+      # Step 5: Set up SonarCloud
+      # This step prepares the SonarCloud scanner
+      - name: Set up SonarCloud
+        uses: SonarSource/sonarcloud-github-action@v1.10
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # SonarCloud token (you'll need to add this)
+
+      # Step 6: Run SonarCloud analysis
+      # This step analyzes your code and uploads the results to SonarCloud
+      - name: Run SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=nikoren_accounting \
+            -Dsonar.organization=nikoren \
+            -Dsonar.sources=. \
+            -Dsonar.tests=. \
+            -Dsonar.go.coverage.reportPaths=coverage.out \
+            -Dsonar.test.inclusions=**/*_test.go \
+            -Dsonar.exclusions=**/vendor/**,**/test/**
